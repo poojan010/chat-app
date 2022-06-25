@@ -1,15 +1,21 @@
 import React, { FC } from 'react';
 import * as eva from '@eva-design/eva';
-import { ApplicationProvider, Layout, Text } from '@ui-kitten/components';
+import { EvaIconsPack } from '@ui-kitten/eva-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ApplicationProvider, IconRegistry, Layout, Text } from '@ui-kitten/components';
 
-const HomeScreen : FC<{}> = () => (
-  <Layout style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-    <Text category='h5' appearance={"hint"} >HOME</Text>
-  </Layout>
-);
+
+import Routers from './navigator';
+
 
 export default () => (
-  <ApplicationProvider {...eva} theme={eva.light}>
-    <HomeScreen />
-  </ApplicationProvider>
+    <>
+        <IconRegistry icons={EvaIconsPack} />
+        <ApplicationProvider {...eva} theme={eva.light}>
+            <SafeAreaProvider>
+                <Routers />
+            </SafeAreaProvider>
+        </ApplicationProvider>
+    </>
 );
+
