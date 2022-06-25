@@ -33,10 +33,11 @@
         "asset/*" : ["./src/asset/*"],
         "components" : ["./src/components/*"],
         "constanst" : ["./src/constanst/*"],
-        "container" : ["./src/container/*"],
+        "container/*" : ["./src/container/*"],
         "navigator" : ["./src/navigator/*"],        
-        "store" : ["./src/store/*"],        
-        "utils" : ["./src/utils/*"],
+        "store/*" : ["./src/store/*"],        
+        "utils/*" : ["./src/utils/*"],
+        "interfaces" : ["./src/interfaces"],
     },                                      /* Specify a set of entries that re-map imports to additional lookup locations. */
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like `./node_modules/@types`. */

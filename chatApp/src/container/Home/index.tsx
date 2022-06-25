@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, Layout, Text } from '@ui-kitten/components';
+import { Button, Divider, Layout, Text } from '@ui-kitten/components';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 
@@ -12,6 +12,20 @@ const HomeScreen : FC<ScreenProps> = (props) => (
         <Text category='h5' appearance={"hint"} >HOME</Text>
         <Button onPress={() => props.navigation.navigate("ChatRoom")}>
             Go To Chat
+        </Button>
+        <Divider />
+        <Divider />
+        <Divider />
+        <Divider />
+        <Button onPress={() => props.navigation.navigate("Register")}>
+            Go To Register
+        </Button>
+        <Divider />
+        <Divider />
+        <Divider />
+        <Divider />
+        <Button onPress={() => props.navigation.navigate("Login")}>
+            Go To Login
         </Button>
     </Layout>
 );

@@ -13,6 +13,7 @@ module.exports = {
             navigator : './src/navigator',
             store : './src/store',
             utils : './src/utils',
+            interfaces : './src/interfaces',
         }
       }
     ]
