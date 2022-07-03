@@ -42,7 +42,7 @@
         "components" : ["./src/components"],
         "constanst" : ["./src/constanst/*"],
         "container/*" : ["./src/container/*"],
-        "navigator" : ["./src/navigator/*"],
+        "navigator/*" : ["./src/navigator/*"],
         "store/*" : ["./src/store/*"],
         "utils/*" : ["./src/utils/*"],
         "interfaces" : ["./src/interfaces"],

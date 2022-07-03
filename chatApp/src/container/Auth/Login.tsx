@@ -1,12 +1,15 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import SimpleToast from 'react-native-simple-toast';
 import database from '@react-native-firebase/database' ;
 import { TouchableWithoutFeedback, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button, Input, Layout, StyleService, Text, useStyleSheet } from '@ui-kitten/components';
+import { Button, Input, Layout, Spinner, StyleService, Text, useStyleSheet } from '@ui-kitten/components';
 
 import { setUser } from 'store/action';
 import { setLoginStatus } from 'utils/asyncStorage';
+import { reset as navigationReset } from 'navigator/navigationHelper';
+import { emailRegex, EMAIL_REQUIRED, INVALID_EMAIL, PASS_REQUIRED, INVALID_PASS, NO_EMAIL_FOUND, WRONG_PASSWORD, LOGIN_SUCCESS_MESSAGE } from 'utils/index';
 
 import { KeyboardAvoidingView } from 'components';
 import { EyeIcon, EyeOffIcon, PersonIcon } from 'asset/Icons';
@@ -15,6 +18,13 @@ import { EyeIcon, EyeOffIcon, PersonIcon } from 'asset/Icons';
 interface ScreenProps extends NativeStackScreenProps<any> {
 
 }
+
+const Loader = () => (
+    <View style={themedStyles.loader}>
+        <Spinner status={"basic"}/>
+    </View>
+);
+
 
 const Register : FC<ScreenProps> = (props) => {
 
@@ -25,6 +35,8 @@ const Register : FC<ScreenProps> = (props) => {
     const [email, setEmail] = React.useState<string>('');
     const [password, setPassword] = React.useState<string>('');
     const [passwordVisible, setPasswordVisible] = React.useState<boolean>(false);
+
+    const [loading,setLoading] = useState(false)
   
     const styles = useStyleSheet(themedStyles);
   
@@ -36,27 +48,49 @@ const Register : FC<ScreenProps> = (props) => {
         setPasswordVisible(!passwordVisible);
     };
 
+    const checkValidations = () => {
+        let validationMessage = '';
+
+        if(email.length === 0) validationMessage = EMAIL_REQUIRED;
+        else if(!emailRegex.test(email)) validationMessage = INVALID_EMAIL;
+        else if(password.length === 0) validationMessage = PASS_REQUIRED;
+        else if(password.length < 8) validationMessage = INVALID_PASS;
+
+        return validationMessage;
+    }
+
     const onLogin = () => {
+
+        /** Input Validation */
+        let validationMessage = checkValidations()
+        if(validationMessage){
+            SimpleToast.show(validationMessage)
+            return;
+        }
+
+        setLoading(true)
         database()
             .ref('users/')
-            .orderByChild("emailId")
+            .orderByChild("email")
             .equalTo(email)
             .once('value')
             .then( async snapshot => {
+                setLoading(false)
                 if (snapshot.val() == null) {
-                    console.log("Invalid Email Id!");
+                    SimpleToast.show(NO_EMAIL_FOUND);
                     return false;
                 }
                 let userData : any = Object.values(snapshot.val())[0];
+                
                 if (userData?.password != password) {
-                    console.log("Invalid Password!");
+                    SimpleToast.show(WRONG_PASSWORD);
                     return false;
                 }
-
-                console.log('User data: ', userData);
+                
                 dispatch(setUser(userData));
                 await setLoginStatus(true);
-                console.log("Login Successfully!");
+                SimpleToast.show(LOGIN_SUCCESS_MESSAGE);
+                navigationReset("ChatList");
             });
     }
 
@@ -93,6 +127,8 @@ const Register : FC<ScreenProps> = (props) => {
                     placeholder='Email'
                     accessoryRight={<PersonIcon/>}
                     value={email}
+                    autoCapitalize='none'
+                    keyboardType="email-address"
                     onChangeText={setEmail}
                 />
 
@@ -113,7 +149,7 @@ const Register : FC<ScreenProps> = (props) => {
                 size='giant'
                 onPress={onLogin}
             >
-                SIGN IN
+                { loading ? <Loader /> : "SIGN IN" }
             </Button>
 
             <Button
@@ -172,4 +208,9 @@ const themedStyles = StyleService.create({
     forgotPasswordButton: {
         paddingHorizontal: 0,
     },
+    loader : {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 });

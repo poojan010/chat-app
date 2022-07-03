@@ -1,14 +1,9 @@
 import { User } from "interfaces";
-import { RESET_USER, SET_USER, TOAST_SET } from "store/action";
+import { RESET_USER, SET_USER } from "store/action";
 
 interface UserAction{
     type : string,
     payload : User
-}
-
-interface ToastAction {
-    type : string,
-    text : string
 }
 
 const initialUserData = {
@@ -38,10 +33,4 @@ export const userData = (state=initialUserData,action:UserAction) => {
             return state;
     }
 
-}
-
-export const toast = (state='',action:ToastAction) => {
-    if(action.type ===  TOAST_SET)
-        return action.text;
-    else return state;
 }

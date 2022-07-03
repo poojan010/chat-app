@@ -1,56 +1,109 @@
-import React, { FC } from 'react';
 import uuid from 'react-native-uuid';
+import { useDispatch } from 'react-redux';
+import React, { FC, useState } from 'react';
+import SimpleToast from 'react-native-simple-toast';
 import database from '@react-native-firebase/database' ;
 import { TouchableWithoutFeedback, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Button, Input, Layout, StyleService, useStyleSheet } from '@ui-kitten/components';
+import { Button, Input, Layout, Spinner, StyleService, useStyleSheet } from '@ui-kitten/components';
 
+import { setUser } from 'store/action';
 import { setLoginStatus } from 'utils/asyncStorage';
+import { reset as navigationReset } from 'navigator/navigationHelper';
+import { textRegex, emailRegex, NAME_REQUIRED, INVALID_NAME, EMAIL_REQUIRED, INVALID_EMAIL, PASS_REQUIRED, INVALID_PASS, REGISTER_SUCCESS_MESSAGE, ACCOUNT_EXIST } from 'utils/index';
 
 import { KeyboardAvoidingView, ProfileAvatar } from 'components';
 import { EmailIcon, EyeIcon, EyeOffIcon, PersonIcon } from 'asset/Icons';
+
 
 
 interface ScreenProps extends NativeStackScreenProps<any> {
 
 }
 
+const Loader = () => (
+    <View style={themedStyles.loader}>
+        <Spinner status={"basic"}/>
+    </View>
+);
 
 const avatarURL = "https://www.pngitem.com/pimgs/m/78-786501_black-avatar-png-user-icon-png-transparent-png.png"
+
+
 
 const Login : FC<ScreenProps> = (props) => {
 
     const { navigation } = props
 
-    const [userName, setUserName] = React.useState<string>();
-    const [email, setEmail] = React.useState<string>();
-    const [password, setPassword] = React.useState<string>();
+    const dispatch = useDispatch()
+
+    const [userName, setUserName] = React.useState<string>('');
+    const [email, setEmail] = React.useState<string>('');
+    const [password, setPassword] = React.useState<string>('');
     const [passwordVisible, setPasswordVisible] = React.useState<boolean>(false);
+
+    const [loading,setLoading] = useState(false)
 
     const styles = useStyleSheet(themedStyles);
 
-    const onSignUpButtonPress = (): void => {
+    const checkValidations = () => {
+        let validationMessage = '';
+
+        if(userName.length === 0) validationMessage = NAME_REQUIRED;
+        else if(!textRegex.test(userName)) validationMessage = INVALID_NAME;
+        else if(email.length === 0) validationMessage = EMAIL_REQUIRED;
+        else if(!emailRegex.test(email)) validationMessage = INVALID_EMAIL;
+        else if(password.length === 0) validationMessage = PASS_REQUIRED;
+        else if(password.length < 8) validationMessage = INVALID_PASS;
+
+        return validationMessage;
+    }
+
+    const checkIsAccountExsist = async () => {
+        const snapshot = await database().ref('users/').orderByChild("email").equalTo(email).once('value');
+        return snapshot.val();
+    }
+
+    const onSignUpButtonPress = async () => {
+
+        /** Input Validation */
+        let validationMessage = checkValidations()
+        if(validationMessage){
+            SimpleToast.show(validationMessage)
+            return;
+        }
+
+        let accDetails = await checkIsAccountExsist()
+        if(accDetails !== null){
+            SimpleToast.show(ACCOUNT_EXIST)
+            return;
+        }
+
         const userData = {
             id : uuid.v4(),
             userName,
             email,
             password,
-            image : "https://img.favpng.com/25/13/19/samsung-galaxy-a8-a8-user-login-telephone-avatar-png-favpng-dqKEPfX7hPbc6SMVUCteANKwj.jpg"
+            profilePic : "https://img.favpng.com/25/13/19/samsung-galaxy-a8-a8-user-login-telephone-avatar-png-favpng-dqKEPfX7hPbc6SMVUCteANKwj.jpg"
         }
 
+        setLoading(true)
         database()
             .ref('/users/'+userData.id)
             .set(userData)
-            .then(async() => {
+            .then(async(res) => {
+                if(__DEV__) console.log("Result ",res)
                 await setLoginStatus(true)
-                console.log("Registered successfully.")
-                navigation.navigate("ChatList");
+                setLoading(false)
+                dispatch(setUser(userData))
+                SimpleToast.show(REGISTER_SUCCESS_MESSAGE)
+                navigationReset("ChatList");
             })
 
     };
 
     const onSignInButtonPress = (): void => {
-        navigation && navigation.navigate('Login');
+        navigation.navigate('Login');
     };
 
     const onPasswordIconPress = (): void => {
@@ -96,6 +149,7 @@ const Login : FC<ScreenProps> = (props) => {
                     placeholder='Email'
                     accessoryRight={<EmailIcon/>}
                     value={email}
+                    keyboardType="email-address"
                     onChangeText={setEmail}
                 />
                 <Input
@@ -114,7 +168,7 @@ const Login : FC<ScreenProps> = (props) => {
                 size='giant'
                 onPress={onSignUpButtonPress}
             >
-                SIGN UP
+                { loading ? <Loader /> : "SIGN UP" }
             </Button>
 
             <Button
@@ -174,4 +228,9 @@ const themedStyles = StyleService.create({
         marginVertical: 12,
         marginHorizontal: 16,
     },
+    loader : {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    }
 });

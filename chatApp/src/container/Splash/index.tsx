@@ -15,6 +15,7 @@ const SplashScreen : FC<ScreenProps> = (props) => {
 
     const checkLoginStatus = async () => {
         let loginStatus = await getLoginStatus()
+        if(__DEV__) console.log("Login Status",loginStatus)
         if(loginStatus) navigation.navigate("ChatList")
         else navigation.navigate("Login")
     }

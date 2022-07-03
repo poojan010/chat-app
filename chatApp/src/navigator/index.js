@@ -10,6 +10,8 @@ import Register from "container/Auth/Register";
 import ChatListScreen from "container/ChatList";
 import ProfileScreen from "container/Profile";
 
+import { setNavigator } from "./navigationHelper";
+
 const Stack  = createNativeStackNavigator()
 
 const Routers = () => {
@@ -19,7 +21,9 @@ const Routers = () => {
     }
 
     return(
-        <NavigationContainer>
+        <NavigationContainer
+            ref={(ref) => setNavigator(ref)}
+        >   
             <Stack.Navigator screenOptions={{ headerShown : false}}>
 
                 <Stack.Screen name="SplashScreen" component={SplashScreen} />
