@@ -1,41 +1,203 @@
-import React, { FC } from 'react';
-import { GiftedChat } from 'react-native-gifted-chat';
+import moment from 'moment';
+import { useSelector } from 'react-redux';
+import database from '@react-native-firebase/database';
+import React, { FC, useEffect, useState } from 'react';
+import { Dimensions, Platform, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Bubble, GiftedChat, Time } from 'react-native-gifted-chat';
+import { StyleService, useStyleSheet } from '@ui-kitten/components';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
+import { User } from 'interfaces';
+import { copyMessageOnLongPress, openEmail, openLink, openPhone } from 'utils/index';
 
 import TopNavBar from './TopNavBar';
 
 
-const imageURL = "https://react.semantic-ui.com/images/avatar/large/matthew.png"
+
+const bottomOffset = Platform.OS === 'ios' ? (Dimensions.get('window').height > 737 ? 65 : 0) : 0
+
+type ParamsList = {
+    ChatRoom : {
+        data : any
+    }
+}
+
+const parsePatterns = () => [
+    {
+        type: "url",
+        style: themedStyles.messageLink,
+        onPress: openLink,
+        onLongPress: copyMessageOnLongPress,
+    },
+    {
+        type: "phone",
+        style: themedStyles.messageLink,
+        onPress: openPhone,
+        onLongPress: copyMessageOnLongPress,
+    },
+    {
+        type: "email",
+        style: themedStyles.messageLink,
+        onPress: openEmail,
+        onLongPress: copyMessageOnLongPress,
+    }
+]
 
 
-interface ScreenProps extends NativeStackScreenProps<any> {
+interface ScreenProps extends NativeStackScreenProps<ParamsList,"ChatRoom"> {
 
 }
 
 const ChatRoom : FC<ScreenProps> = (props) => {
 
+    const styles = useStyleSheet(themedStyles);
+
     const { navigation } = props
+    const { data } = props.route.params
+    const roomId = data.roomId
+
+    const loginUser : User = useSelector((state:any) => state.userData)
+
+    const chatloginUser = { _id : loginUser._id }
+    
+
+    const [messages,setMessages] = useState<Array<any>>([])
+    const onMessageSend = (messageData:any) => {
+
+        let message = messageData[0]
+        
+        const { _id, text, createdAt } = message
+
+        const sendRef = database().ref('/messages/'+roomId).push();
+
+        let sendData = {
+            text,
+            roomId,
+            createdAt : moment().format(),
+            user : loginUser,
+            _id : sendRef.key,
+        }
+
+        sendRef
+            .set(sendData)
+            .then(() => {
+                let chatListData = {
+                    lastMsg : text,
+                    createdAt : moment().format()
+                }
+                database()
+                    .ref('/chatlist/'+data._id+"/"+loginUser._id)
+                    .update(chatListData)
+                    .then(() => console.log('Data updated.',sendData));
+
+                database()
+                    .ref('/chatlist/'+loginUser._id+"/"+data._id)
+                    .update(chatListData)
+                    .then(() => console.log('Data updated.',sendData));
+            })
+
+    }
+
+    useEffect(() => {
+        const onChildAdd = database()
+            .ref('/messages/'+roomId)
+            .on('child_added', snapshot => {
+                setMessages(state => [snapshot.val(),...state])
+            });
+  
+        // Stop listening for updates when no longer required
+        return () => database().ref('/messages/'+roomId).off('child_added', onChildAdd);
+    },[roomId])
+
+
 
     const onBackPress = () => {
         navigation.pop()
     }
+
+
     
     const onProfilePress = () => {
         
     } 
 
+
+
+    const renderBubble = (props:any) => {
+    
+        const right = props.currentMessage.user._id === loginUser._id
+
+        const bubbleWrapperStyle = {
+            left: styles.chatBubbleLeft,
+            right: styles.chatBubbleRight,
+        }
+        const bubbleTextStyle = {
+            left: styles.chatBubbleLeftText,
+            right: styles.chatBubbleTextRight
+        }
+        const bubbleViewStyle ={ 
+            ...styles.bubbleView,
+            marginLeft: right ? (5) : (0),
+            marginRight: right ? (0) : (5),
+        }
+
+        return(
+            <View style={bubbleViewStyle}>
+                <Bubble 
+                    {...props}
+                    textStyle={bubbleTextStyle}
+                    wrapperStyle={bubbleWrapperStyle}
+
+                />
+            </View>
+        )
+    }
+
+    const renderTime = (props:any) => {
+        const timeTextStyle = {
+            left : styles.chatTimeTextLeftStyle,
+            right : styles.chatTimeTextRightStyle
+        }
+        const containerStyle = {
+            left : styles.chatTimeTextContainerLeftStyle,
+            right : {}
+        } 
+
+        return(
+            <Time 
+                {...props}
+                timeTextStyle={timeTextStyle}
+                containerStyle={containerStyle}
+            />
+        )
+    }
+    
+
     return( 
         <SafeAreaView style={{ flex: 1 }}>
 
             <TopNavBar 
-                userImage={imageURL}
-                userName={"Virat Kohli"}
+                userName={data.userName} 
                 onBackPress={onBackPress}
+                userImage={data.profilePic}
                 onProfilePress={onProfilePress}
+                
             />
 
-            <GiftedChat />
+            <View style={styles.chatArea}>
+                <GiftedChat 
+                    // @ts-ignore
+                    renderAvatar={null}
+                    messages={messages}
+                    user={chatloginUser}
+                    onSend={onMessageSend}
+                    renderTime={renderTime}
+                    bottomOffset={bottomOffset}
+                    renderBubble={renderBubble}
+                    parsePatterns={parsePatterns}
+                />
+            </View>
 
         </SafeAreaView>
     )
@@ -43,3 +205,42 @@ const ChatRoom : FC<ScreenProps> = (props) => {
 }
 
 export default ChatRoom
+
+
+const themedStyles = StyleService.create({
+    chatArea : {
+        flex : 1
+    },
+    chatBubbleLeft : {
+        backgroundColor : 'color-primary-default',
+        paddingHorizontal : 5
+    },
+    chatBubbleLeftText : {
+        color : 'background-basic-color-1',
+    },
+    chatBubbleRight : {
+        backgroundColor : 'background-basic-color-1',
+        paddingHorizontal : 5
+    },
+    chatBubbleTextRight : {
+        color : 'color-primary-default',
+    },
+    bubbleView : {
+        marginBottom: 5,
+    },
+    chatTimeTextContainerLeftStyle : {
+        flex : 1,
+        marginLeft : 0,
+        alignSelf : 'flex-end',
+    },
+    chatTimeTextLeftStyle : {
+        color : 'background-basic-color-1',
+    },
+    chatTimeTextRightStyle : {
+        color : 'grey'
+    },
+    messageLink : {
+        color : '#67ACFF',
+        textDecorationLine: "underline",
+    }
+})

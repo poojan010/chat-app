@@ -3,14 +3,17 @@ import { useDispatch } from 'react-redux';
 import React, { FC, useState } from 'react';
 import SimpleToast from 'react-native-simple-toast';
 import database from '@react-native-firebase/database' ;
-import { TouchableWithoutFeedback, View } from 'react-native';
+import storage from '@react-native-firebase/storage'
+import ImagePicker from 'react-native-image-crop-picker';
+import { Platform, TouchableWithoutFeedback, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+
 import { Button, Input, Layout, Spinner, StyleService, useStyleSheet } from '@ui-kitten/components';
 
 import { setUser } from 'store/action';
 import { setLoginStatus } from 'utils/asyncStorage';
 import { reset as navigationReset } from 'navigator/navigationHelper';
-import { textRegex, emailRegex, NAME_REQUIRED, INVALID_NAME, EMAIL_REQUIRED, INVALID_EMAIL, PASS_REQUIRED, INVALID_PASS, REGISTER_SUCCESS_MESSAGE, ACCOUNT_EXIST } from 'utils/index';
+import { textRegex, emailRegex, NAME_REQUIRED, INVALID_NAME, EMAIL_REQUIRED, INVALID_EMAIL, PASS_REQUIRED, INVALID_PASS, REGISTER_SUCCESS_MESSAGE, ACCOUNT_EXIST, SOMETHING_WENT_WRONG } from 'utils/index';
 
 import { KeyboardAvoidingView, ProfileAvatar } from 'components';
 import { EmailIcon, EyeIcon, EyeOffIcon, PersonIcon } from 'asset/Icons';
@@ -27,13 +30,14 @@ const Loader = () => (
     </View>
 );
 
-const avatarURL = "https://www.pngitem.com/pimgs/m/78-786501_black-avatar-png-user-icon-png-transparent-png.png"
+const avatarURL = "https://w7.pngwing.com/pngs/980/304/png-transparent-computer-icons-user-profile-avatar-heroes-silhouette-avatar-thumbnail.png"
 
 
 
 const Login : FC<ScreenProps> = (props) => {
 
     const { navigation } = props
+    const styles = useStyleSheet(themedStyles);
 
     const dispatch = useDispatch()
 
@@ -44,7 +48,18 @@ const Login : FC<ScreenProps> = (props) => {
 
     const [loading,setLoading] = useState(false)
 
-    const styles = useStyleSheet(themedStyles);
+
+    const [imageUri,setImageUri] = useState('')
+    const onPressEditAvatar = async () => {
+        try {
+            const image : any = await ImagePicker.openPicker({ mediaType : 'photo', cropping : true })
+            const imageURL = Platform.OS == 'android' ? image.path : image.sourceURL
+            setImageUri(imageURL)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 
     const checkValidations = () => {
         let validationMessage = '';
@@ -65,41 +80,52 @@ const Login : FC<ScreenProps> = (props) => {
     }
 
     const onSignUpButtonPress = async () => {
+        try {
+            /** Input Validation */
+            let validationMessage = checkValidations()
+            if(validationMessage){
+                SimpleToast.show(validationMessage)
+                return;
+            }
+            setLoading(true)
 
-        /** Input Validation */
-        let validationMessage = checkValidations()
-        if(validationMessage){
-            SimpleToast.show(validationMessage)
-            return;
+            let accDetails = await checkIsAccountExsist()
+            if(accDetails !== null){
+                SimpleToast.show(ACCOUNT_EXIST)
+                return;
+            }
+
+            let profilePicUri = avatarURL
+            if(imageUri){
+                const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+                const uploadUri = Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri;
+                const ref = storage().ref(filename)
+                await ref.putFile(uploadUri);
+                profilePicUri = await ref.getDownloadURL()
+            }
+
+            const userData = {
+                _id : uuid.v4(),
+                userName, email, password,
+                profilePic : profilePicUri,
+            }
+
+            database()
+                .ref('/users/'+userData._id)
+                .set(userData)
+                .then(async(res) => {
+                    if(__DEV__) console.log("Result ",res)
+                    await setLoginStatus(true)
+                    setLoading(false)
+                    dispatch(setUser(userData))
+                    SimpleToast.show(REGISTER_SUCCESS_MESSAGE)
+                    navigationReset("ChatList");
+                })
+
+        } catch (error) {
+            console.log("Register Error",error)
+            SimpleToast.show(SOMETHING_WENT_WRONG)
         }
-
-        let accDetails = await checkIsAccountExsist()
-        if(accDetails !== null){
-            SimpleToast.show(ACCOUNT_EXIST)
-            return;
-        }
-
-        const userData = {
-            id : uuid.v4(),
-            userName,
-            email,
-            password,
-            profilePic : "https://img.favpng.com/25/13/19/samsung-galaxy-a8-a8-user-login-telephone-avatar-png-favpng-dqKEPfX7hPbc6SMVUCteANKwj.jpg"
-        }
-
-        setLoading(true)
-        database()
-            .ref('/users/'+userData.id)
-            .set(userData)
-            .then(async(res) => {
-                if(__DEV__) console.log("Result ",res)
-                await setLoginStatus(true)
-                setLoading(false)
-                dispatch(setUser(userData))
-                SimpleToast.show(REGISTER_SUCCESS_MESSAGE)
-                navigationReset("ChatList");
-            })
-
     };
 
     const onSignInButtonPress = (): void => {
@@ -116,19 +142,15 @@ const Login : FC<ScreenProps> = (props) => {
         </TouchableWithoutFeedback>
     );
 
-    const onPressEditAvatar = () => {
-
-    }
-
     return (
         <KeyboardAvoidingView style={styles.container}>
             <View style={styles.headerContainer}>
                 <ProfileAvatar
+                    resizeMode='cover'
                     // @ts-ignore
                     style={styles.profileAvatar}
-                    resizeMode='contain'
-                    source={{ uri : avatarURL}}
                     onPressEditAvatar={onPressEditAvatar}
+                    source={{ uri : imageUri ? imageUri : avatarURL}}
                 />
             </View>
 
@@ -222,6 +244,7 @@ const themedStyles = StyleService.create({
         color: 'text-hint-color',
     },
     signUpButton: {
+        marginTop : 20,
         marginHorizontal: 16,
     },
     signInButton: {

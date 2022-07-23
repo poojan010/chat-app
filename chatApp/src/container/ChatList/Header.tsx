@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import {  View } from 'react-native';
 import { Avatar, MenuItem, OverflowMenu, StyleService, Text, TopNavigation, TopNavigationAction, useStyleSheet, useTheme } from '@ui-kitten/components';
 
+import images from 'asset/images';
 import { MenuIcon, InfoIcon, LogoutIcon } from 'asset/Icons';
 
 
@@ -11,6 +12,7 @@ interface Props{
     onProfilePress : () => void,
     onLogoutPress : () => void,
 }
+
 
 
 const Header : FC<Props> = (props) => {
@@ -45,7 +47,7 @@ const Header : FC<Props> = (props) => {
             <Avatar
                 //@ts-ignore 
                 style={styles.logo}
-                source={{ uri : userImage }}
+                source={images.chatLogo}
             />
             <Text category={"h6"} style={styles.headerTitle}>{headerTitle}</Text>
         </View>

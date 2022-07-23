@@ -18,6 +18,10 @@ export const LogoutIcon = (props:any) => (
     <Icon {...props} name='log-out'/>
 );
 
+export const PeopleIcon = (props:any) => (
+    <Icon {...props} name='people-outline'/>
+  );
+
 export const EyeIcon = (style: ImageStyle): IconElement => (
     <Icon {...style} name='eye'/>
   );

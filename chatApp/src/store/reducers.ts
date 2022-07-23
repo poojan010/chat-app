@@ -7,7 +7,8 @@ interface UserAction{
 }
 
 const initialUserData = {
-    id : '',
+    
+    _id : '',
     email : '',
     userName : '',
     profilePic : '',
@@ -20,7 +21,7 @@ export const userData = (state=initialUserData,action:UserAction) => {
     switch(type){
         case SET_USER:
             return Object.assign({}, state, {
-                id: (payload.id === undefined) ? state.id : payload.id,
+                _id: (payload._id === undefined) ? state._id : payload._id,
                 email: (payload.email === undefined) ? state.email : payload.email,
                 userName: (payload.userName === undefined) ? state.userName : payload.userName,
                 profilePic: (payload.profilePic === undefined) ? state.profilePic : payload.profilePic,

@@ -40,15 +40,20 @@ export default ProfileAvatar
 const styles = StyleSheet.create({
     avatar: {
         alignSelf: 'center',
+        height : 100, 
+        width : 100,
+        borderRadius : 50
     },
     editButton: {
         position: 'absolute',
         alignSelf: 'flex-end',
-        bottom: -5,
+        bottom: 2,
     },
     editAvatarButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
+        borderWidth : 1,
+        borderColor : 'black'
     },
 });

@@ -1,5 +1,6 @@
+import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
-import { SafeAreaView, View } from 'react-native';
+import { SafeAreaView, TouchableOpacity } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
 import database from '@react-native-firebase/database' ;
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,6 +11,7 @@ import { setLoginStatus } from 'utils/asyncStorage';
 import { reset as navigationReset } from 'navigator/navigationHelper';
 
 import Header from './Header';
+import { MenuIcon, PeopleIcon, PersonIcon } from 'asset/Icons';
 
 
 
@@ -17,7 +19,7 @@ interface ScreenProps extends NativeStackScreenProps<any> {
 
 }
 
-type ItemType = { item : User, index : number }
+type ItemType = { item : any, index : number }
 
 const ChatListScreen : FC<ScreenProps> = (props) => {
 
@@ -27,25 +29,25 @@ const ChatListScreen : FC<ScreenProps> = (props) => {
 
     const loginUser : User = useSelector((state:any) => state.userData)
 
-    const [userList,setUserList] = useState<Array<any>>([])
 
-
-    const getAllUsers = () => {
+    const [chatList,setChatList] = useState<Array<any>>([])
+    const getChatList = () => {
         database()
-            .ref('users/')
-            .once('value')
-            .then((snapshot) => {
-                let users = Object.values(snapshot.val()).filter((item:any) => item.id != loginUser.id)
-                setUserList(users)
+            .ref('chatlist/'+loginUser._id)
+            .on('value',snapshot => {
+                if(snapshot.val())
+                    setChatList(Object.values(snapshot.val()))
+                
             })
-    }   
-
-    useEffect(() => {
-        getAllUsers()
-    },[])
+    }
+    useEffect(() => { getChatList() },[])
 
     const goToProfile = () => {
 
+    }
+
+    const goToUsersScreen = () => {
+        navigation.navigate("UserList")
     }
 
     const onLogout = async () => {
@@ -53,27 +55,10 @@ const ChatListScreen : FC<ScreenProps> = (props) => {
         navigationReset("Login")
     }
 
-    const createChatList = (data:any) => {
-        let myData = {
-            ...loginUser,
-            lastMsg : ""
-        }
-        let otherUserData = {
-            ...data,
-            lastMsg : ""
-        }
-        delete otherUserData["password"]
 
-        database()
-            .ref('/chatlist/'+data.id+"/"+loginUser.id)
-            .update(myData)
-            .then(() => console.log('Data updated.'));
-
-        database()
-            .ref('/chatlist/'+loginUser.id+"/"+data.id)
-            .update(otherUserData)
-            .then(() => console.log('Data updated.'));
-    }
+    const goToChatRoom = (data:any) => {
+        navigation.navigate("ChatRoom",{ data : data })
+    } 
 
     const renderUserAvatar = (item:User,props:any) => {
         return (
@@ -83,15 +68,14 @@ const ChatListScreen : FC<ScreenProps> = (props) => {
                 source={{ uri : item.profilePic }}
             />
         )
-        
     }
 
     const renderItem = ({ item, index } : ItemType) => {
         return(
             <ListItem
                 title={item.userName}
-                description={""}
-                onPress={createChatList.bind(this,item)}
+                description={item.lastMsg}
+                onPress={goToChatRoom.bind(this,item)}
                 accessoryLeft={renderUserAvatar.bind(this,item)}
             />
         )
@@ -101,16 +85,24 @@ const ChatListScreen : FC<ScreenProps> = (props) => {
         <SafeAreaView style={styles.screen}>
 
             <Header 
-                headerTitle={'Chat App'} 
+                headerTitle={'Chatify'} 
                 onLogoutPress={onLogout}
                 onProfilePress={goToProfile}
                 userImage={loginUser.profilePic} 
             />
 
             <List 
-                data={userList}
+                data={chatList}
                 renderItem={renderItem}
             />
+
+   
+            <TouchableOpacity activeOpacity={0.6} style={styles.usersButton} onPress={goToUsersScreen}>
+                <PeopleIcon 
+                    style={styles.peopleIcon} 
+                    fill={theme['background-basic-color-1']} 
+                />
+            </TouchableOpacity>
 
         </SafeAreaView>
     )
@@ -123,6 +115,21 @@ const themedStyles = StyleService.create({
     },
     avatar : {
 
+    },
+    usersButton : {
+        width : 60, 
+        right : 25, 
+        height : 60, 
+        bottom : 35, 
+        borderRadius : 30 , 
+        alignItems : 'center',
+        position : 'absolute', 
+        justifyContent : 'center', 
+        backgroundColor : 'color-primary-default', 
+    },
+    peopleIcon : {
+        height: 32, 
+        width : 32
     }
 })
 

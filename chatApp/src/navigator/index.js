@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import SplashScreen from "container/Splash";
 import ChatRoom from "container/ChatRoom";
 import Login from "container/Auth/Login";
+import UserList from "container/UserList";
 import Register from "container/Auth/Register";
 import ChatListScreen from "container/ChatList";
 import ProfileScreen from "container/Profile";
@@ -35,6 +36,7 @@ const Routers = () => {
 
                 {/* App Screens */}
                 <Stack.Screen name="ChatList" component={ChatListScreen} />
+                <Stack.Screen name="UserList" component={UserList} />
                 <Stack.Screen name="ChatRoom" component={ChatRoom} />
                 <Stack.Screen name="Profile" component={ProfileScreen} />
 

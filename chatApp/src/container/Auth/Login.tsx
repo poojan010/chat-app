@@ -192,6 +192,7 @@ const themedStyles = StyleService.create({
         marginTop: 16,
     },
     signInButton: {
+        marginTop : 20,
         marginHorizontal: 16,
     },
     signUpButton: {
