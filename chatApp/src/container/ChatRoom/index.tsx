@@ -15,7 +15,7 @@ import TopNavBar from './TopNavBar';
 
 
 
-const bottomOffset = Platform.OS === 'ios' ? (Dimensions.get('window').height > 737 ? 65 : 0) : 0
+const bottomOffset = Platform.OS === 'ios' ? (Dimensions.get('window').height > 737 ? 35 : 0) : 0
 
 type ParamsList = {
     ChatRoom : {
