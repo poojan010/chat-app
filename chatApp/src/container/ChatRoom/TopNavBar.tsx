@@ -34,7 +34,7 @@ const TopNavBar : FC<Props> = (props) => {
                 onBackdropPress={toggleMenu}
             >
                 <MenuItem accessoryLeft={InfoIcon} title='About'/>
-                <MenuItem accessoryLeft={LogoutIcon} title='Logout'/>
+                {/* <MenuItem accessoryLeft={LogoutIcon} title='Logout'/> */}
             </OverflowMenu>
         </React.Fragment>
     );

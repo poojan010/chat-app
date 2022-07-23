@@ -1,4 +1,3 @@
-import uuid from 'react-native-uuid';
 import { useSelector } from 'react-redux';
 import { SafeAreaView, TouchableOpacity } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
@@ -7,11 +6,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Avatar, List, ListItem, StyleService, Text, useStyleSheet, useTheme } from '@ui-kitten/components';
 
 import { User } from 'interfaces';
+import { PeopleIcon } from 'asset/Icons';
+import { sortByDateFn } from 'utils/index';
 import { setLoginStatus } from 'utils/asyncStorage';
 import { reset as navigationReset } from 'navigator/navigationHelper';
 
 import Header from './Header';
-import { MenuIcon, PeopleIcon, PersonIcon } from 'asset/Icons';
 
 
 
@@ -35,9 +35,11 @@ const ChatListScreen : FC<ScreenProps> = (props) => {
         database()
             .ref('chatlist/'+loginUser._id)
             .on('value',snapshot => {
-                if(snapshot.val())
-                    setChatList(Object.values(snapshot.val()))
-                
+                if(snapshot.val()){
+                    let chat_list = Object.values(snapshot.val());
+                    chat_list.sort(sortByDateFn)
+                    setChatList(chat_list)
+                }
             })
     }
     useEffect(() => { getChatList() },[])

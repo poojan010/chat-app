@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useCallback } from 'react';
 import {  View } from 'react-native';
 import { Avatar, MenuItem, OverflowMenu, StyleService, Text, TopNavigation, TopNavigationAction, useStyleSheet, useTheme } from '@ui-kitten/components';
 
@@ -19,7 +19,7 @@ const Header : FC<Props> = (props) => {
 
     const theme = useTheme();
     const styles = useStyleSheet(themedStyles);
-    const { headerTitle, userImage, onLogoutPress, onProfilePress } = props
+    const { headerTitle, onLogoutPress, onProfilePress } = props
 
     const [menuVisible, setMenuVisible] = React.useState(false);
 
@@ -36,13 +36,13 @@ const Header : FC<Props> = (props) => {
                 visible={menuVisible}
                 onBackdropPress={toggleMenu}
             >
-                <MenuItem onPress={onProfilePress} accessoryLeft={InfoIcon} title='Profile'/>
+                {/* <MenuItem onPress={onProfilePress} accessoryLeft={InfoIcon} title='Profile'/> */}
                 <MenuItem onPress={onLogoutPress} accessoryLeft={LogoutIcon} title='Logout'/>
             </OverflowMenu>
         </React.Fragment>
     );
 
-    const renderTitle = (props:any) => (
+    const renderTitle = useCallback((props:any) => (
         <View  style={styles.titleContainer}>
             <Avatar
                 //@ts-ignore 
@@ -51,7 +51,7 @@ const Header : FC<Props> = (props) => {
             />
             <Text category={"h6"} style={styles.headerTitle}>{headerTitle}</Text>
         </View>
-    );
+    ),[]);
 
     return (
         <TopNavigation

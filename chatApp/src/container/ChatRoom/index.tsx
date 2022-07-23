@@ -75,6 +75,7 @@ const ChatRoom : FC<ScreenProps> = (props) => {
             text,
             roomId,
             createdAt : moment().format(),
+            timeStamp : moment().unix(),
             user : loginUser,
             _id : sendRef.key,
         }
@@ -89,14 +90,11 @@ const ChatRoom : FC<ScreenProps> = (props) => {
                 database()
                     .ref('/chatlist/'+data._id+"/"+loginUser._id)
                     .update(chatListData)
-                    .then(() => console.log('Data updated.',sendData));
 
                 database()
                     .ref('/chatlist/'+loginUser._id+"/"+data._id)
                     .update(chatListData)
-                    .then(() => console.log('Data updated.',sendData));
             })
-
     }
 
     useEffect(() => {
@@ -189,6 +187,7 @@ const ChatRoom : FC<ScreenProps> = (props) => {
                 <GiftedChat 
                     // @ts-ignore
                     renderAvatar={null}
+                    wrapInSafeArea={false}
                     messages={messages}
                     user={chatloginUser}
                     onSend={onMessageSend}
@@ -209,18 +208,20 @@ export default ChatRoom
 
 const themedStyles = StyleService.create({
     chatArea : {
-        flex : 1
+        flex : 1,
     },
     chatBubbleLeft : {
         backgroundColor : 'color-primary-default',
-        paddingHorizontal : 5
+        minWidth : 80,
+        borderRadius : 8
     },
     chatBubbleLeftText : {
         color : 'background-basic-color-1',
     },
     chatBubbleRight : {
         backgroundColor : 'background-basic-color-1',
-        paddingHorizontal : 5
+        minWidth : 80,
+        borderRadius : 8
     },
     chatBubbleTextRight : {
         color : 'color-primary-default',

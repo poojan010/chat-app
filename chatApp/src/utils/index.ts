@@ -66,3 +66,8 @@ export const searchMatch = function(userList:Array<User>,match:string) {
     
     return newList
 }
+
+export const sortByDateFn = function(a:any,b:any){
+    // @ts-ignore
+    return (new Date(b.createdAt) - new Date(a.createdAt));
+}
