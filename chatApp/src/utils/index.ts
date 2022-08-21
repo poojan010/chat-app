@@ -23,28 +23,28 @@ export const WRONG_PASSWORD = "Wrong Password"
 export const ACCOUNT_EXIST = "Account already exsit with this email id"
 
 
-export const openLink = (link:string) => {
+export const openLink = (link: string) => {
     Linking.canOpenURL(link)
-    .then(supported => {
-        if (supported) Linking.openURL(link);
-        else if (__DEV__) console.log('Don\'t know how to open URI: ' + link);
-    })
-    .catch((error) => {
-        if (__DEV__) console.log('Don\'t know how to open URI: ' + link);
-    })
+        .then(supported => {
+            if (supported) Linking.openURL(link);
+            else if (__DEV__) console.log('Don\'t know how to open URI: ' + link);
+        })
+        .catch((error) => {
+            if (__DEV__) console.log('Don\'t know how to open URI: ' + link);
+        })
 }
 
-export const copyMessageOnLongPress = (text:string) => {
+export const copyMessageOnLongPress = (text: string) => {
     Clipboard.setString(text);
     SimpleToast.show(TEXT_COPIED)
-    
+
 }
 
-export const openPhone = (number:string) => {
+export const openPhone = (number: string) => {
     Linking.openURL('tel:' + number)
 }
 
-export const openEmail = (email:string) => {
+export const openEmail = (email: string) => {
     let url = `mailto:${email}`
     Linking.canOpenURL(url)
         .then(supported => {
@@ -56,18 +56,18 @@ export const openEmail = (email:string) => {
         })
 }
 
-export const searchMatch = function(userList:Array<User>,match:string) {
+export const searchMatch = function (userList: Array<User>, match: string) {
     let finalMatch = match.trim().toString()
-    
-    let newList = userList.filter((user:User) => {
+
+    let newList = userList.filter((user: User) => {
         let userName = user.userName.toLowerCase()
         return userName.includes(finalMatch)
     })
-    
+
     return newList
 }
 
-export const sortByDateFn = function(a:any,b:any){
+export const sortByDateFn = function (a: any, b: any) {
     // @ts-ignore
     return (new Date(b.createdAt) - new Date(a.createdAt));
 }

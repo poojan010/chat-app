@@ -10,6 +10,7 @@ import Routers from './navigator';
 import { persistor, store } from 'store/index';
 
 
+
 const App = () => (
     <>
         <IconRegistry icons={EvaIconsPack} />
@@ -24,7 +25,7 @@ const App = () => (
 export default () => (
     <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-            <App/>
+            <App />
         </PersistGate>
     </Provider>
 );

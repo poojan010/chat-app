@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>66526731883-m9dn04r57amjg6rksuorpt7stohd8nep.apps.googleusercontent.com</string>
+	<string>877586678871-9lcibijcuqibn73hocouaunfgre4att5.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.66526731883-m9dn04r57amjg6rksuorpt7stohd8nep</string>
+	<string>com.googleusercontent.apps.877586678871-9lcibijcuqibn73hocouaunfgre4att5</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAghNDtUnnYZLiJHiMz95M6z3cdjUm_W7k</string>
+	<string>AIzaSyCLw9GtXkuUzGTwbHXyNJqpTzGVCs7l-No</string>
 	<key>GCM_SENDER_ID</key>
-	<string>66526731883</string>
+	<string>877586678871</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>org.reactjs.native.example.chatApp</string>
+	<string>org.reactjs.native.example.ChatApp</string>
 	<key>PROJECT_ID</key>
-	<string>chatapp-f3ccc</string>
+	<string>chatapp-a0fb1</string>
 	<key>STORAGE_BUCKET</key>
-	<string>chatapp-f3ccc.appspot.com</string>
+	<string>chatapp-a0fb1.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,8 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:66526731883:ios:11f2d215bead9b1fd81b2e</string>
-	<key>DATABASE_URL</key>
-	<string>https://chatapp-f3ccc-default-rtdb.firebaseio.com</string>
+	<string>1:877586678871:ios:a284f0ad4b2dfe62468f12</string>
 </dict>
 </plist>

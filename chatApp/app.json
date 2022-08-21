@@ -1,4 +1,5 @@
 {
-  "name": "chatApp",
-  "displayName": "chatApp"
+    "name": "ChatApp",
+    "displayName": "ChatApp",
+    "templateName": "ChatApp"
 }

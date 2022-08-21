@@ -20,8 +20,7 @@ const persistConfig = {
     timeout: 0,
     // Whitelist (Save Specific Reducers)
     whitelist: [
-        'userData',
-
+        'userData'
     ],
     // Blacklist (Don't Save Specific Reducers)
     blacklist: [
