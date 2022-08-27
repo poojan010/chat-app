@@ -9,6 +9,7 @@ import { Avatar, Input, List, ListItem, StyleService, TopNavigation, TopNavigati
 import { User } from 'interfaces';
 import { BackIcon } from 'assets/icons';
 import { searchMatch } from 'utils/index';
+import { checkChatListExist, getAllUsersData, getUser } from 'utils/firebaseHelpers';
 
 
 
@@ -37,14 +38,10 @@ const UserList: FC<ScreenProps> = (props) => {
 
     const [allUsersList, setAllUsersList] = useState<Array<any>>([])
     const [userList, setUserList] = useState<Array<any>>([])
-    const getAllUsers = () => {
-        database()
-            .ref('users/')
-            .once('value')
-            .then((snapshot) => {
-                let users = Object.values(snapshot.val()).filter((item: any) => item._id != loginUser._id)
-                setAllUsersList(users)
-            })
+    const getAllUsers = async () => {
+        const users = await getAllUsersData(loginUser._id)
+        setAllUsersList(users)
+
     }
     useEffect(() => { getAllUsers(); }, [])
     useEffect(() => { setUserList(allUsersList) }, [allUsersList])
@@ -58,45 +55,51 @@ const UserList: FC<ScreenProps> = (props) => {
 
     }
 
-
-    const checkChatListExist = async (data: any) => {
-        const snapshot = await database().ref('/chatlist/' + data._id + "/" + loginUser._id).once('value');
-        return snapshot.val()
-    }
-
     const createChatList = async (data: any) => {
+        try {
+            let chatList = await checkChatListExist(data, loginUser)
 
-        let chatList = await checkChatListExist(data)
+            if (chatList) {
+                const userData = await getUser(chatList.user)
+                const newChatList = {
+                    ...chatList,
+                    user: userData
+                }
+                navigation.navigate("ChatRoom", { data: newChatList })
+                return;
+            }
 
-        if (chatList) {
-            navigation.navigate("ChatRoom", { data: chatList })
-            return;
+            let roomId = uuid.v4()
+            let myData = {
+                user: data._id,
+                lastMsg: "",
+                roomId
+            }
+            let otherUserData = {
+                user: loginUser._id,
+                lastMsg: "",
+                roomId
+            }
+
+            database()
+                .ref('/chatlist/' + data._id + "/" + loginUser._id)
+                .update(myData)
+                .then(() => console.log('Data updated.', myData));
+
+            database()
+                .ref('/chatlist/' + loginUser._id + "/" + data._id)
+                .update(otherUserData)
+                .then(() => console.log('Data updated.', otherUserData));
+
+            const newOtherUserData = {
+                ...otherUserData,
+                user: data,
+            }
+
+            navigation.navigate("ChatRoom", { data: newOtherUserData })
+        } catch (error) {
+            console.log("Error ", error)
         }
-
-        let roomId = uuid.v4()
-        let myData = {
-            ...loginUser,
-            lastMsg: "",
-            roomId
-        }
-        let otherUserData = {
-            ...data,
-            lastMsg: "",
-            roomId
-        }
-        delete otherUserData["password"]
-
-        database()
-            .ref('/chatlist/' + data._id + "/" + loginUser._id)
-            .update(myData)
-            .then(() => console.log('Data updated.'));
-
-        database()
-            .ref('/chatlist/' + loginUser._id + "/" + data._id)
-            .update(otherUserData)
-            .then(() => console.log('Data updated.'));
-
-        navigation.navigate("ChatRoom", { data: otherUserData })
     }
 
 

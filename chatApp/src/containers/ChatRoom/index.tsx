@@ -9,6 +9,7 @@ import { StyleService, useStyleSheet } from '@ui-kitten/components';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { User } from 'interfaces';
+import { getUser } from 'utils/firebaseHelpers';
 import { copyMessageOnLongPress, openEmail, openLink, openPhone } from 'utils/index';
 
 import TopNavBar from './TopNavBar';
@@ -18,8 +19,8 @@ import TopNavBar from './TopNavBar';
 const bottomOffset = Platform.OS === 'ios' ? (Dimensions.get('window').height > 737 ? 35 : 0) : 0
 
 type ParamsList = {
-    ChatRoom : {
-        data : any
+    ChatRoom: {
+        data: any
     }
 }
 
@@ -45,68 +46,75 @@ const parsePatterns = () => [
 ]
 
 
-interface ScreenProps extends NativeStackScreenProps<ParamsList,"ChatRoom"> {
+interface ScreenProps extends NativeStackScreenProps<ParamsList, "ChatRoom"> {
 
 }
 
-const ChatRoom : FC<ScreenProps> = (props) => {
+const ChatRoom: FC<ScreenProps> = (props) => {
 
     const styles = useStyleSheet(themedStyles);
 
     const { navigation } = props
     const { data } = props.route.params
+    const otherUser = data.user
     const roomId = data.roomId
 
-    const loginUser : User = useSelector((state:any) => state.userData)
+    const loginUser: User = useSelector((state: any) => state.userData)
 
-    const chatloginUser = { _id : loginUser._id }
-    
+    const chatloginUser = { _id: loginUser._id }
 
-    const [messages,setMessages] = useState<Array<any>>([])
-    const onMessageSend = (messageData:any) => {
+
+    const [messages, setMessages] = useState<Array<any>>([])
+    const onMessageSend = (messageData: any) => {
 
         let message = messageData[0]
-        
+
         const { _id, text, createdAt } = message
 
-        const sendRef = database().ref('/messages/'+roomId).push();
+        const sendRef = database().ref('/messages/' + roomId).push();
 
         let sendData = {
             text,
             roomId,
-            createdAt : moment().format(),
-            timeStamp : moment().unix(),
-            user : loginUser,
-            _id : sendRef.key,
+            createdAt: moment().format(),
+            timeStamp: moment().unix(),
+            user: loginUser._id,
+            _id: sendRef.key,
         }
 
         sendRef
             .set(sendData)
             .then(() => {
                 let chatListData = {
-                    lastMsg : text,
-                    createdAt : moment().format()
+                    lastMsg: text,
+                    createdAt: moment().format()
                 }
                 database()
-                    .ref('/chatlist/'+data._id+"/"+loginUser._id)
+                    .ref('/chatlist/' + otherUser._id + "/" + loginUser._id)
                     .update(chatListData)
 
                 database()
-                    .ref('/chatlist/'+loginUser._id+"/"+data._id)
+                    .ref('/chatlist/' + loginUser._id + "/" + otherUser._id)
                     .update(chatListData)
             })
     }
 
     useEffect(() => {
         const onChildAdd = database()
-            .ref('/messages/'+roomId)
-            .on('child_added', snapshot => {
-                setMessages(state => [snapshot.val(),...state])
+            .ref('/messages/' + roomId)
+            .on('child_added', async (snapshot) => {
+                const message = snapshot.val()
+                const userData = await getUser(message.user)
+                const newMessage = {
+                    ...message,
+                    user: userData
+                }
+                setMessages(state => [newMessage, ...state])
             });
-  
+
         // Stop listening for updates when no longer required
-        return () => database().ref('/messages/'+roomId).off('child_added', onChildAdd);
-    },[roomId])
+        return () => database().ref('/messages/' + roomId).off('child_added', onChildAdd);
+    }, [roomId])
 
 
 
@@ -115,15 +123,15 @@ const ChatRoom : FC<ScreenProps> = (props) => {
     }
 
 
-    
+
     const onProfilePress = () => {
-        
-    } 
+
+    }
 
 
 
-    const renderBubble = (props:any) => {
-    
+    const renderBubble = (props: any) => {
+
         const right = props.currentMessage.user._id === loginUser._id
 
         const bubbleWrapperStyle = {
@@ -134,15 +142,15 @@ const ChatRoom : FC<ScreenProps> = (props) => {
             left: styles.chatBubbleLeftText,
             right: styles.chatBubbleTextRight
         }
-        const bubbleViewStyle ={ 
+        const bubbleViewStyle = {
             ...styles.bubbleView,
             marginLeft: right ? (5) : (0),
             marginRight: right ? (0) : (5),
         }
 
-        return(
+        return (
             <View style={bubbleViewStyle}>
-                <Bubble 
+                <Bubble
                     {...props}
                     textStyle={bubbleTextStyle}
                     wrapperStyle={bubbleWrapperStyle}
@@ -152,39 +160,39 @@ const ChatRoom : FC<ScreenProps> = (props) => {
         )
     }
 
-    const renderTime = (props:any) => {
+    const renderTime = (props: any) => {
         const timeTextStyle = {
-            left : styles.chatTimeTextLeftStyle,
-            right : styles.chatTimeTextRightStyle
+            left: styles.chatTimeTextLeftStyle,
+            right: styles.chatTimeTextRightStyle
         }
         const containerStyle = {
-            left : styles.chatTimeTextContainerLeftStyle,
-            right : {}
-        } 
+            left: styles.chatTimeTextContainerLeftStyle,
+            right: {}
+        }
 
-        return(
-            <Time 
+        return (
+            <Time
                 {...props}
                 timeTextStyle={timeTextStyle}
                 containerStyle={containerStyle}
             />
         )
     }
-    
 
-    return( 
+
+    return (
         <SafeAreaView style={{ flex: 1 }}>
 
-            <TopNavBar 
-                userName={data.userName} 
+            <TopNavBar
                 onBackPress={onBackPress}
-                userImage={data.profilePic}
+                userName={otherUser.userName}
+                userImage={otherUser.profilePic}
                 onProfilePress={onProfilePress}
-                
+
             />
 
             <View style={styles.chatArea}>
-                <GiftedChat 
+                <GiftedChat
                     // @ts-ignore
                     renderAvatar={null}
                     wrapInSafeArea={false}
@@ -207,41 +215,41 @@ export default ChatRoom
 
 
 const themedStyles = StyleService.create({
-    chatArea : {
-        flex : 1,
+    chatArea: {
+        flex: 1,
     },
-    chatBubbleLeft : {
-        backgroundColor : 'color-primary-default',
-        minWidth : 80,
-        borderRadius : 8
+    chatBubbleLeft: {
+        backgroundColor: 'color-primary-default',
+        minWidth: 80,
+        borderRadius: 8
     },
-    chatBubbleLeftText : {
-        color : 'background-basic-color-1',
+    chatBubbleLeftText: {
+        color: 'background-basic-color-1',
     },
-    chatBubbleRight : {
-        backgroundColor : 'background-basic-color-1',
-        minWidth : 80,
-        borderRadius : 8
+    chatBubbleRight: {
+        backgroundColor: 'background-basic-color-1',
+        minWidth: 80,
+        borderRadius: 8
     },
-    chatBubbleTextRight : {
-        color : 'color-primary-default',
+    chatBubbleTextRight: {
+        color: 'color-primary-default',
     },
-    bubbleView : {
+    bubbleView: {
         marginBottom: 5,
     },
-    chatTimeTextContainerLeftStyle : {
-        flex : 1,
-        marginLeft : 0,
-        alignSelf : 'flex-end',
+    chatTimeTextContainerLeftStyle: {
+        flex: 1,
+        marginLeft: 0,
+        alignSelf: 'flex-end',
     },
-    chatTimeTextLeftStyle : {
-        color : 'background-basic-color-1',
+    chatTimeTextLeftStyle: {
+        color: 'background-basic-color-1',
     },
-    chatTimeTextRightStyle : {
-        color : 'grey'
+    chatTimeTextRightStyle: {
+        color: 'grey'
     },
-    messageLink : {
-        color : '#67ACFF',
+    messageLink: {
+        color: '#67ACFF',
         textDecorationLine: "underline",
     }
 })

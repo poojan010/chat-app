@@ -1,13 +1,12 @@
 import { useSelector } from 'react-redux';
-import { SafeAreaView, TouchableOpacity } from 'react-native';
 import React, { FC, useEffect, useState } from 'react';
-import database from '@react-native-firebase/database';
+import { SafeAreaView, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Avatar, List, ListItem, StyleService, Text, useStyleSheet, useTheme } from '@ui-kitten/components';
+import { Avatar, List, ListItem, StyleService, useStyleSheet, useTheme } from '@ui-kitten/components';
 
 import { User } from 'interfaces';
 import { PeopleIcon } from 'assets/icons';
-import { sortByDateFn } from 'utils/index';
+import { getChatList } from 'utils/firebaseHelpers';
 import { setLoginStatus } from 'utils/asyncStorage';
 import { reset as navigationReset } from 'navigator/navHelper';
 
@@ -31,18 +30,12 @@ const ChatListScreen: FC<ScreenProps> = (props) => {
 
 
     const [chatList, setChatList] = useState<Array<any>>([])
-    const getChatList = () => {
-        database()
-            .ref('chatlist/' + loginUser._id)
-            .on('value', snapshot => {
-                if (snapshot.val()) {
-                    let chat_list = Object.values(snapshot.val());
-                    chat_list.sort(sortByDateFn)
-                    setChatList(chat_list)
-                }
-            })
+    const getChatListUsers = async () => {
+        const chatUsers = await getChatList(loginUser._id)
+        console.log(chatUsers)
+        setChatList(chatUsers)
     }
-    useEffect(() => { getChatList() }, [])
+    useEffect(() => { getChatListUsers() }, [])
 
     const goToProfile = () => {
 
@@ -75,10 +68,10 @@ const ChatListScreen: FC<ScreenProps> = (props) => {
     const renderItem = ({ item, index }: ItemType) => {
         return (
             <ListItem
-                title={item.userName}
+                title={item.user.userName}
                 description={item.lastMsg}
                 onPress={goToChatRoom.bind(this, item)}
-                accessoryLeft={renderUserAvatar.bind(this, item)}
+                accessoryLeft={renderUserAvatar.bind(this, item.user)}
             />
         )
     }
@@ -99,7 +92,11 @@ const ChatListScreen: FC<ScreenProps> = (props) => {
             />
 
 
-            <TouchableOpacity activeOpacity={0.6} style={styles.usersButton} onPress={goToUsersScreen}>
+            <TouchableOpacity
+                activeOpacity={0.6}
+                style={styles.usersButton}
+                onPress={goToUsersScreen}
+            >
                 <PeopleIcon
                     style={styles.peopleIcon}
                     fill={theme['background-basic-color-1']}
