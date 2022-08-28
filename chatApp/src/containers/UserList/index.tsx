@@ -71,12 +71,12 @@ const UserList: FC<ScreenProps> = (props) => {
 
             let roomId = uuid.v4()
             let myData = {
-                user: data._id,
+                user: loginUser._id,
                 lastMsg: "",
                 roomId
             }
             let otherUserData = {
-                user: loginUser._id,
+                user: data._id,
                 lastMsg: "",
                 roomId
             }

@@ -18,7 +18,7 @@ export const getUser = (_id: string) => {
     })
 }
 
-const populateUser = async (obj: any) => {
+export const populateUser = async (obj: any) => {
     const user = await getUser(obj.user)
     // @ts-ignore
     return { ...obj, user }
@@ -40,6 +40,33 @@ export const getChatList = (_id: string): Promise<Array<any>> => {
                     const chatUsers = await Promise.all(chat_list.map((item: any) => populateUser(item)));
 
                     return resolve(chatUsers);
+                }
+            },
+            (errorObject) => {
+                if (__DEV__) console.log("Error ", errorObject);
+                return reject([]);
+            }
+        );
+
+    });
+}
+
+export const getAllMessages = (roomId: string): Promise<Array<any>> => {
+
+    return new Promise(function (resolve, reject) {
+        const messagesRef = database().ref('/messages/' + roomId);
+
+        messagesRef.on('value',
+            async (snapshot) => {
+                if (snapshot.val()) {
+
+                    let messages: any[] = Object.values(snapshot.val());
+
+                    messages.sort(sortByDateFn);
+
+                    const chatMessages = await Promise.all(messages.map((item: any) => populateUser(item)));
+
+                    return resolve(chatMessages);
                 }
             },
             (errorObject) => {

@@ -9,7 +9,7 @@ import { StyleService, useStyleSheet } from '@ui-kitten/components';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { User } from 'interfaces';
-import { getUser } from 'utils/firebaseHelpers';
+import { getAllMessages, getUser } from 'utils/firebaseHelpers';
 import { copyMessageOnLongPress, openEmail, openLink, openPhone } from 'utils/index';
 
 import TopNavBar from './TopNavBar';
@@ -65,6 +65,13 @@ const ChatRoom: FC<ScreenProps> = (props) => {
 
 
     const [messages, setMessages] = useState<Array<any>>([])
+    const [isMessagesFetched, setIsMessagesFetched] = useState(false)
+    const fetchMessages = async () => {
+        const allMessages = await getAllMessages(roomId)
+        const newAllMessages = allMessages.slice(1)
+        setMessages(newAllMessages)
+        setIsMessagesFetched(true)
+    }
     const onMessageSend = (messageData: any) => {
 
         let message = messageData[0]
@@ -100,21 +107,30 @@ const ChatRoom: FC<ScreenProps> = (props) => {
     }
 
     useEffect(() => {
-        const onChildAdd = database()
-            .ref('/messages/' + roomId)
-            .on('child_added', async (snapshot) => {
-                const message = snapshot.val()
-                const userData = await getUser(message.user)
-                const newMessage = {
-                    ...message,
-                    user: userData
-                }
-                setMessages(state => [newMessage, ...state])
-            });
+        fetchMessages()
+    }, [])
 
-        // Stop listening for updates when no longer required
-        return () => database().ref('/messages/' + roomId).off('child_added', onChildAdd);
-    }, [roomId])
+    useEffect(() => {
+        if (isMessagesFetched) {
+            getAllMessages(roomId);
+
+            const onChildAdd = database()
+                .ref('/messages/' + roomId)
+                .limitToLast(1)
+                .on('child_added', async (snapshot) => {
+                    const message = snapshot.val()
+                    const userData = await getUser(message.user)
+                    const newMessage = {
+                        ...message,
+                        user: userData
+                    }
+                    setMessages(state => [newMessage, ...state])
+                });
+
+            // Stop listening for updates when no longer required
+            return () => database().ref('/messages/' + roomId).off('child_added', onChildAdd);
+        }
+    }, [isMessagesFetched])
 
 
 
